@@ -1,0 +1,42 @@
+# Environment
+.env
+.env.local
+apps/web/.env.local
+
+# Python
+.venv/
+services/typo/.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+.next/
+out/
+
+# Database (never commit live DB)
+seed.db
+demo_seed.db
+*.db
+
+# Jupyter
+*.ipynb_checkpoints/
+_executed.ipynb
+
+# Build artifacts
+dist/
+build/
+
+# Demo video (large binary)
+lume_demo.mp4
+*.mp4
+
+# Figures cache
+docs/figures/.cache/
+services/typo/app/eda/.cache/
+
+# OS
+.DS_Store

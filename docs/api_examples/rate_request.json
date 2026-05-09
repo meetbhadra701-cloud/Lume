@@ -1,0 +1,23 @@
+{
+  "render_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "user_id": "demo",
+  "text_hash": null,
+  "features_json": null,
+  "word_count": null,
+  "text_id": null,
+  "adaptation_config": {
+    "letter_spacing_em": 0.04,
+    "word_spacing_em": 0.16,
+    "hyphenation_on": false,
+    "emphasis_on": true,
+    "color_overlay_on": false,
+    "chunked_on": false,
+    "opendyslexic_on": false
+  },
+  "arm_index": 3,
+  "recommendation_source": "bandit",
+  "was_user_modified": false,
+  "wpm": 185.5,
+  "comprehension_score": 0.75,
+  "comprehension_type": "self_rated"
+}

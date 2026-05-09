@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "event_id": 42,
+  "reward": 0.712,
+  "next_recommendation": {
+    "letter_spacing_em": 0.04,
+    "word_spacing_em": 0.16,
+    "hyphenation_on": true,
+    "emphasis_on": true,
+    "color_overlay_on": false,
+    "chunked_on": false,
+    "opendyslexic_on": false
+  }
+}

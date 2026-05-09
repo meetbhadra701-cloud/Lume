@@ -1,0 +1,32 @@
+{
+  "render_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "text_hash": "abc123def456",
+  "text_id": "gutenberg_001",
+  "features": {
+    "avg_word_len": 5.2,
+    "syllable_density": 1.8,
+    "freq_percentile_mean": 0.72,
+    "sentence_count": 3,
+    "flesch_kincaid": 12.4
+  },
+  "word_count": 54,
+  "arm_index": 3,
+  "adaptation_config": {
+    "letter_spacing_em": 0.04,
+    "word_spacing_em": 0.16,
+    "hyphenation_on": false,
+    "emphasis_on": true,
+    "color_overlay_on": false,
+    "chunked_on": false,
+    "opendyslexic_on": false
+  },
+  "recommendation_source": "bandit",
+  "tokens": [
+    {"text": "The", "is_emphasized": false, "class_hints": [], "is_chunk_break": false},
+    {"text": "ability", "is_emphasized": false, "class_hints": [], "is_chunk_break": false},
+    {"text": "to", "is_emphasized": false, "class_hints": [], "is_chunk_break": false},
+    {"text": "read", "is_emphasized": false, "class_hints": [], "is_chunk_break": false},
+    {"text": "quickly", "is_emphasized": true, "class_hints": ["lume-emphasis"], "is_chunk_break": false}
+  ],
+  "chunks": [[0, 53]]
+}
