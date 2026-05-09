@@ -104,6 +104,14 @@ async def startup_event():
     except Exception as exc:
         logger.warning("textstat warmup failed (non-fatal): %s", exc)
 
+    # Pre-load wordfreq Trie + FreqIndex (50k vocab, happens once)
+    try:
+        from app.adaptations.highlight import build_freq_resources
+        build_freq_resources()
+        logger.info("Frequency resources (Trie + FreqIndex) loaded.")
+    except Exception as exc:
+        logger.warning("Frequency resource load failed (non-fatal): %s", exc)
+
 
 # ── Routes ───────────────────────────────────────────────────────────────────
 

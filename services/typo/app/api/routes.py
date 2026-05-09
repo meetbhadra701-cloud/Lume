@@ -13,6 +13,11 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
+from app.adaptations.chunking import chunk_text
+from app.adaptations.color import get_color_classes
+from app.adaptations.highlight import emphasize_tokens
+from app.adaptations.hyphenation import hyphenate_word
+from app.adaptations.spacing import get_spacing_classes
 from app.api.mode_configs import config_for_mode
 from app.ml.reward import compute_reward
 from app.schemas import (
@@ -76,9 +81,15 @@ def _count_syllables_fast(word: str) -> int:
     return max(count, 1)
 
 
-def _stub_features(text: str) -> TextFeatures:
-    """Stub text feature extraction (fast — no slow textstat.syllable_count)."""
+def _extract_features(text: str) -> TextFeatures:
+    """Extract text features for the feature vector.
+
+    Uses textstat for Flesch-Kincaid (warmed at startup) and the fast
+    syllable heuristic for syllable density.  Frequency percentile is
+    computed from the shared FreqIndex.  Capped at 1 000 words.
+    """
     import textstat
+    from app.adaptations.highlight import _get_shared
 
     words = text.split()
     word_count = len(words)
@@ -89,59 +100,82 @@ def _stub_features(text: str) -> TextFeatures:
     except Exception:
         fk = 8.0
 
-    syllables = sum(_count_syllables_fast(w) for w in words)
-    avg_word_len = (sum(len(w) for w in words) / max(word_count, 1))
-    syllable_density = syllables / max(word_count, 1)
+    syllables = sum(_count_syllables_fast(w) for w in words[:1000])
+    avg_word_len = sum(len(w) for w in words) / max(word_count, 1)
+    syllable_density = syllables / max(min(word_count, 1000), 1)
+
+    # Frequency percentile mean via FreqIndex (cap 1000 tokens)
+    try:
+        _trie, fi = _get_shared()
+        percentiles = [
+            p for w in words[:1000]
+            if (p := fi.percentile(w)) is not None
+        ]
+        freq_percentile_mean = sum(percentiles) / len(percentiles) if percentiles else 0.5
+    except Exception:
+        freq_percentile_mean = 0.5
 
     return TextFeatures(
         avg_word_len=round(avg_word_len, 2),
         syllable_density=round(syllable_density, 2),
-        freq_percentile_mean=0.5,   # stub: uniform 50th percentile
+        freq_percentile_mean=round(freq_percentile_mean, 3),
         sentence_count=sentences,
         flesch_kincaid=round(fk, 1),
     )
 
 
 def _tokenise(text: str, cfg: AdaptationConfig) -> tuple[list[Token], list[list[int]]]:
-    """Stub tokeniser — returns word tokens with basic emphasis and chunk breaks.
+    """Full DSA-powered tokeniser.
 
-    Phase 1 will replace this with trie/freq_index/hyphenation/chunking.
+    Uses:
+    - highlight.py  → emphasis flag (trie + freq_index, O(W·L))
+    - hyphenation.py → soft hyphens via Knuth-Plass DP (O(W·B²))
+    - chunking.py   → chunk indices (O(W log W))
+    - spacing.py    → letter/word spacing CSS class hints
+    - color.py      → warm overlay CSS class hint
     """
     words = text.split()
-    tokens = []
-    chunk_size = 80
-    chunks: list[list[int]] = []
-    current_chunk_start = 0
+    if not words:
+        return [], [[]]
 
+    # Shared CSS class hints that apply to every token
+    global_classes: list[str] = []
+    global_classes.extend(get_spacing_classes(cfg.letter_spacing_em, cfg.word_spacing_em))
+    global_classes.extend(get_color_classes(cfg.color_overlay_on))
+    if cfg.opendyslexic_on:
+        global_classes.append("lume-opendyslexic")
+
+    # Emphasis mask: O(W · L) — uses trie + freq_index
+    emphasis_mask = emphasize_tokens(words, cap=1000) if cfg.emphasis_on else [False] * len(words)
+
+    # Chunks: O(W log W)
+    chunk_groups = chunk_text(words, chunk_size=80) if cfg.chunked_on else [list(range(len(words)))]
+    # Build a set of token indices that are chunk-break starts (first token of each chunk after the first)
+    chunk_break_indices: set[int] = set()
+    if cfg.chunked_on:
+        for group in chunk_groups[1:]:
+            if group:
+                chunk_break_indices.add(group[0])
+
+    tokens: list[Token] = []
     for i, word in enumerate(words):
-        # Stub emphasis: emphasize words longer than 7 chars
-        is_emphasized = cfg.emphasis_on and len(word) > 7
-        class_hints = []
-        if is_emphasized:
+        # Hyphenation: O(B²) memoised per word
+        display_text = hyphenate_word(word) if cfg.hyphenation_on and len(word) >= 4 else word
+
+        is_emph = emphasis_mask[i]
+        class_hints = list(global_classes)
+        if is_emph:
             class_hints.append("lume-emphasis")
 
-        # Chunk break
-        is_chunk_break = cfg.chunked_on and (i > 0) and (i % chunk_size == 0)
-        if is_chunk_break:
-            chunks.append(list(range(current_chunk_start, i)))
-            current_chunk_start = i
+        tokens.append(Token(
+            text=display_text,
+            is_emphasized=is_emph,
+            class_hints=class_hints,
+            is_chunk_break=(i in chunk_break_indices),
+        ))
 
-        tokens.append(
-            Token(
-                text=word,
-                is_emphasized=is_emphasized,
-                class_hints=class_hints,
-                is_chunk_break=is_chunk_break,
-            )
-        )
-
-    # Final chunk
-    if len(words) > 0:
-        chunks.append(list(range(current_chunk_start, len(words))))
-    else:
-        chunks = [[]]
-
-    return tokens, chunks
+    # Return raw chunks (list[list[int]])
+    return tokens, chunk_groups
 
 
 # ── /render ──────────────────────────────────────────────────────────────────
@@ -193,7 +227,7 @@ async def render(req: RenderRequest) -> RenderResponse:
         chunks = cached["chunks"]
         features = TextFeatures(**cached["features"])
     else:
-        features = _stub_features(text)
+        features = _extract_features(text)
         tokens, chunks = _tokenise(text, cfg)
         render_cache[cache_key] = {
             "tokens": [t.model_dump() for t in tokens],
