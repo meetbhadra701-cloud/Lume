@@ -118,7 +118,7 @@ def generate_synthetic_events(
     py_rng = random.Random(seed)
 
     corpus_path = Path(__file__).resolve().parent / "sample_corpus.jsonl"
-    passages = [json.loads(l) for l in corpus_path.read_text().splitlines() if l.strip()]
+    passages = [json.loads(line) for line in corpus_path.read_text().splitlines() if line.strip()]
 
     rows: list[dict[str, Any]] = []
 
