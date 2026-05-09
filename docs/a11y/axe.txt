@@ -1,0 +1,7 @@
+Lume axe-core accessibility audit
+URL: http://localhost:3000
+Timestamp: 2026-05-09T20:18:51.409Z
+Source: lighthouse-a11y-extraction
+Accessibility score: 100/100
+Violations: 0
+  No violations ✓

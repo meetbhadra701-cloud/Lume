@@ -19,6 +19,8 @@ from app.adaptations.highlight import emphasize_tokens
 from app.adaptations.hyphenation import hyphenate_word
 from app.adaptations.spacing import get_spacing_classes
 from app.api.mode_configs import config_for_mode
+from app.data_structures.adaptation_heap import AdaptationHeap
+from app.ml.arms import ARMS
 from app.ml.reward import compute_reward
 from app.schemas import (
     AdaptationConfig,
@@ -349,3 +351,59 @@ async def rate(req: RateRequest) -> RateResponse:
         reward=round(reward, 3),
         next_recommendation=None,  # Phase 2 wires the recommender here
     )
+
+
+# ── /top-arms ─────────────────────────────────────────────────────────────────
+
+@router.get("/top-arms/{user_id}")
+async def top_arms(user_id: str, k: int = 3) -> dict:
+    """Return the top-k performing arm configs for a user (uses AdaptationHeap DSA).
+
+    Reads events from the DB, accumulates mean reward per arm via AdaptationHeap,
+    and returns the top-k arms sorted by descending mean reward.
+    """
+    k = max(1, min(k, 16))
+    with get_conn() as conn:
+        rows = conn.execute(
+            """
+            SELECT arm_index, AVG(reward) as mean_reward, COUNT(*) as n_events
+            FROM events
+            WHERE user_id = ? AND arm_index >= 0 AND was_user_modified = 0
+            GROUP BY arm_index
+            """,
+            (user_id,),
+        ).fetchall()
+
+    heap = AdaptationHeap(k=k)
+    for arm_index, mean_reward, n_events in rows:
+        if arm_index < len(ARMS):
+            heap.push(arm_index, mean_reward, config=ARMS[arm_index])
+
+    top = heap.top_k()
+    result = []
+    for entry in top:
+        arm_cfg = ARMS[entry.arm_index] if entry.arm_index < len(ARMS) else {}
+        # Build a human-readable label from the arm config
+        features = []
+        if arm_cfg.get("letter_spacing_em", 0) > 0:
+            features.append("Letter spacing")
+        if arm_cfg.get("word_spacing_em", 0) > 0:
+            features.append("Word spacing")
+        if arm_cfg.get("hyphenation_on"):
+            features.append("Hyphenation")
+        if arm_cfg.get("emphasis_on"):
+            features.append("Emphasis")
+        if arm_cfg.get("color_overlay_on"):
+            features.append("Warm overlay")
+        if arm_cfg.get("chunked_on"):
+            features.append("Chunked")
+        if arm_cfg.get("opendyslexic_on"):
+            features.append("OpenDyslexic")
+        label = ", ".join(features) if features else "Default"
+        result.append({
+            "arm_index": entry.arm_index,
+            "mean_reward": round(entry.score, 3),
+            "label": label,
+        })
+
+    return {"user_id": user_id, "top_arms": result}

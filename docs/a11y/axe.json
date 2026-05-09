@@ -1,0 +1,8 @@
+{
+  "violations": [],
+  "passes": 20,
+  "accessibility_score": 100,
+  "source": "lighthouse-a11y-extraction",
+  "url": "http://localhost:3000",
+  "timestamp": "2026-05-09T20:18:51.409Z"
+}

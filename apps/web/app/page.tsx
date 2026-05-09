@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -10,6 +10,7 @@ import {
   RenderResponse,
 } from "@/lib/types";
 import { getRandomSeedPassage } from "@/lib/seed_passages";
+import { RollingAverage } from "@/lib/timing";
 
 const USER_ID = "demo";
 const MIN_WORD_COUNT = 50;
@@ -42,12 +43,35 @@ export default function ReaderPage() {
   const startTimeRef = useRef<number | null>(null);
   const [wpm, setWpm] = useState<number | null>(null);
 
+  // Rolling WPM display (sliding window, §DSA_INVENTORY — RollingAverage O(1))
+  const rollingAvgRef = useRef<RollingAverage>(new RollingAverage(5));
+  const [rollingWpm, setRollingWpm] = useState<number | null>(null);
+
+  // Top-k arm chips
+  interface TopArm { arm_index: number; mean_reward: number; label: string }
+  const [topArms, setTopArms] = useState<TopArm[] | null>(null);
+
   // Input validation
   const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
   const isTextValid =
     text.trim().length > 0 &&
     text.length <= 10_000 &&
     wordCount >= MIN_WORD_COUNT;
+
+  // Rolling WPM ticker — updates every 2s while reading
+  useEffect(() => {
+    if (phase !== "reading" || !renderResponse) return;
+    const interval = setInterval(() => {
+      if (startTimeRef.current === null) return;
+      const elapsedMin = (Date.now() - startTimeRef.current) / 60_000;
+      if (elapsedMin < 0.01) return; // avoid absurd values in first 600ms
+      const instantWpm = Math.round(renderResponse.word_count / elapsedMin);
+      const capped = Math.min(Math.max(instantWpm, 1), 600);
+      rollingAvgRef.current.push(capped);
+      setRollingWpm(Math.round(rollingAvgRef.current.average ?? capped));
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [phase, renderResponse]);
 
   // Load demo passage
   const loadDemoPassage = useCallback(() => {
@@ -74,6 +98,8 @@ export default function ReaderPage() {
     setRenderResponse(null);
     startTimeRef.current = null;
     setWpm(null);
+    rollingAvgRef.current.reset();
+    setRollingWpm(null);
 
     try {
       const body = {
@@ -165,6 +191,16 @@ export default function ReaderPage() {
 
       setRateResult({ reward: data.reward, event_id: data.event_id });
       setPhase("done");
+
+      // Fetch top-k arm chips (uses AdaptationHeap DSA on backend)
+      fetch(`/api/top-arms?user_id=${USER_ID}&k=3`)
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.top_arms && Array.isArray(d.top_arms)) {
+            setTopArms(d.top_arms as TopArm[]);
+          }
+        })
+        .catch(() => {}); // non-critical; chips just won't show
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Rating submission failed");
       setPhase("done");
@@ -180,6 +216,9 @@ export default function ReaderPage() {
     setRateResult(null);
     setWpm(null);
     setWasUserModified(false);
+    setTopArms(null);
+    rollingAvgRef.current.reset();
+    setRollingWpm(null);
     startTimeRef.current = null;
   }, []);
 
@@ -215,7 +254,6 @@ export default function ReaderPage() {
               onClick={loadDemoPassage}
               variant="outline"
               size="sm"
-              aria-label="Load a demo passage"
             >
               Load demo passage
             </Button>
@@ -239,7 +277,6 @@ export default function ReaderPage() {
             onClick={handleRender}
             disabled={!isTextValid}
             className="self-start"
-            aria-label="Render text with Lume adaptations"
           >
             Render with Lume
           </Button>
@@ -300,13 +337,24 @@ export default function ReaderPage() {
             ))}
           </div>
 
-          <p className="text-xs text-muted-foreground">
-            Recommendation: {renderResponse.recommendation_source} · Arm:{" "}
-            {renderResponse.arm_index === -1
-              ? "manual"
-              : renderResponse.arm_index}{" "}
-            · {renderResponse.word_count} words
-          </p>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <p className="text-xs text-muted-foreground">
+              Recommendation: {renderResponse.recommendation_source} · Arm:{" "}
+              {renderResponse.arm_index === -1
+                ? "manual"
+                : renderResponse.arm_index}{" "}
+              · {renderResponse.word_count} words
+            </p>
+            {rollingWpm !== null && (
+              <p
+                aria-live="polite"
+                aria-label={`Current reading speed: approximately ${rollingWpm} words per minute`}
+                className="text-xs font-medium text-muted-foreground tabular-nums"
+              >
+                ~{rollingWpm} WPM
+              </p>
+            )}
+          </div>
 
           <Button
             onClick={handleDoneReading}
@@ -393,6 +441,32 @@ export default function ReaderPage() {
                 Event #{rateResult.event_id} logged. Lume is learning your
                 preferences.
               </p>
+            </div>
+          )}
+
+          {/* Top-k arm chips — uses AdaptationHeap DSA on backend (§DSA_INVENTORY) */}
+          {topArms && topArms.length > 0 && (
+            <div
+              aria-label="Your top typographic configurations"
+              className="mt-2"
+            >
+              <p className="text-xs font-medium text-muted-foreground mb-2">
+                Your best configurations so far:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {topArms.map((arm) => (
+                  <span
+                    key={arm.arm_index}
+                    className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium"
+                    title={`Arm ${arm.arm_index} · mean reward ${(arm.mean_reward * 100).toFixed(1)}%`}
+                  >
+                    {arm.label}
+                    <span className="text-muted-foreground">
+                      {(arm.mean_reward * 100).toFixed(0)}%
+                    </span>
+                  </span>
+                ))}
+              </div>
             </div>
           )}
           {error && (
