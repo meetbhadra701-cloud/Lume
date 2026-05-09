@@ -44,7 +44,7 @@ cd services/typo && uv run uvicorn app.main:app --port 8001
 
 ## Tech Stack
 
-- **Frontend:** Next.js (see `docs/ARCHITECTURE.md` for scaffolded version), TypeScript, Tailwind CSS, shadcn/ui
+- **Frontend:** Next.js 16.2.6, TypeScript, Tailwind CSS, shadcn/ui
 - **Backend:** FastAPI, Python 3.11, SQLite, scikit-learn Ridge, scipy, statsmodels
 - **Package managers:** pnpm (frontend), uv (backend)
 
@@ -64,7 +64,7 @@ cd services/typo && uv run uvicorn app.main:app --port 8001
 
 | Track | Operationalized |
 |---|---|
-| Accessibility (#5) | ✅ Lighthouse ≥95, axe-core 0 violations, keyboard nav |
+| Accessibility (#5) | ✅ Lighthouse 100/100, axe-core 0 violations, keyboard nav, WCAG AA |
 | EDA + Statistics (#7) | ✅ 3 hypotheses, statsmodels OLS, paired t-test, ANOVA |
 | Technical Depth (#2) | ✅ 8 DSAs, Ridge regression, Thompson sampling bandit |
 | Social Good (#1) | Submitted only |

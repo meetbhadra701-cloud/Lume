@@ -1,6 +1,6 @@
 """Test that /render is read-only — does not insert rows into the events table (rev. 4 fix 52)."""
 import pytest
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 
 from app.main import app
 
@@ -8,9 +8,9 @@ from app.main import app
 @pytest.fixture()
 def temp_db(tmp_path, monkeypatch):
     """Create a temp SQLite DB."""
-    from pathlib import Path
-    from app.store.db import apply_schema
     import sqlite3
+    from pathlib import Path
+
 
     db_file = tmp_path / "test.db"
     monkeypatch.setenv("LUME_DB_PATH", str(db_file))

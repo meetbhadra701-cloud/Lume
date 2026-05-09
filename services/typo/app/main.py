@@ -12,8 +12,8 @@ from app.store.paths import repo_root  # noqa: E402
 load_dotenv(repo_root() / ".env", override=False)
 load_dotenv(Path(__file__).resolve().parent.parent / ".env", override=True)
 
-import time  # noqa: E402
 import logging  # noqa: E402
+import time  # noqa: E402
 
 from fastapi import FastAPI, HTTPException, Request  # noqa: E402
 from fastapi.exceptions import RequestValidationError  # noqa: E402

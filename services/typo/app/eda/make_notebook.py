@@ -3,8 +3,9 @@
 Run from services/typo/:
     .venv/bin/python app/eda/make_notebook.py
 """
-import nbformat
 from pathlib import Path
+
+import nbformat
 
 CELL_SETUP = '''\
 import sys

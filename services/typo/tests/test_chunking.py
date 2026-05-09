@@ -1,5 +1,4 @@
 """Tests for recursive text chunker (Phase 1.6)."""
-import pytest
 
 from app.adaptations.chunking import chunk_text
 

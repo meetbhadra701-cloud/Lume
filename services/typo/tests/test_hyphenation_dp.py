@@ -1,10 +1,9 @@
 """Tests for Knuth-Plass-inspired DP hyphenation (Phase 1.4)."""
-import pytest
 
 from app.adaptations.hyphenation import (
     _knuth_plass_breaks,
-    hyphenate_word,
     apply_hyphenation,
+    hyphenate_word,
 )
 
 # Unicode soft hyphen

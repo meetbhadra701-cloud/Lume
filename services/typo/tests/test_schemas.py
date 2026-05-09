@@ -6,8 +6,6 @@ from app.schemas import (
     AdaptationConfig,
     RateRequest,
     RenderRequest,
-    RenderResponse,
-    TextFeatures,
     Token,
 )
 

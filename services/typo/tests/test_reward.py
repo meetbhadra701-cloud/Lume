@@ -1,6 +1,7 @@
 """Tests for reward.py (Phase 2.0)."""
 import pytest
-from app.ml.reward import compute_reward, normalize_wpm, WPM_FLOOR, WPM_CEIL
+
+from app.ml.reward import WPM_CEIL, WPM_FLOOR, compute_reward, normalize_wpm
 
 
 def test_normalize_wpm_at_floor():

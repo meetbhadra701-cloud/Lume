@@ -3,11 +3,11 @@
 Cache key is (text_hash, sha1(json(adaptation_config_canonical))).
 Same text + different configs must be separate cache entries.
 """
-from pathlib import Path
 import sqlite3
+from pathlib import Path
 
 import pytest
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 
 from app.main import app
 

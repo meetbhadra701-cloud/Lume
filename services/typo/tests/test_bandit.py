@@ -13,7 +13,6 @@ def test_sample_returns_valid_arm():
 
 def test_update_changes_posteriors():
     b = LumeBandit(n_arms=4)
-    alpha_before = b.alpha["user1"].copy() if "user1" in b.alpha else None
     b.update("user1", 2, 0.8)
     # alpha for arm 2 should increase
     assert b.alpha["user1"][2] > 1.0    # started at 1.0
@@ -69,9 +68,9 @@ def test_rebuild_from_events(tmp_path, monkeypatch):
     conn.commit()
 
     # Insert 3 events: arm 0 with rewards 0.8, 0.6; arm 2 with reward 0.3
-    import time, json
+    import json
+    import time
     now = int(time.time() * 1000)
-    from app.schemas import AdaptationConfig
     from app.ml.arms import ARMS
     cfg_json = json.dumps(ARMS[0])
     feats_json = json.dumps({"avg_word_len": 4.5, "syllable_density": 1.3,

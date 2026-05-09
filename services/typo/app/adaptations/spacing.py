@@ -15,7 +15,6 @@ Public API
 
 from __future__ import annotations
 
-
 # CSS class names emitted into Token.class_hints
 _CLASS_LETTER = "lume-letter-spaced"
 _CLASS_WORD = "lume-word-spaced"

@@ -91,6 +91,7 @@ def _extract_features(text: str) -> TextFeatures:
     computed from the shared FreqIndex.  Capped at 1 000 words.
     """
     import textstat
+
     from app.adaptations.highlight import _get_shared
 
     words = text.split()
@@ -272,7 +273,6 @@ async def rate(req: RateRequest) -> RateResponse:
     SOLE WRITER of events table (rev. 4 fix 53).
     Reads render_sessions[render_id] for context; falls back to client-supplied fields.
     """
-    import time
 
     # Reconstruct context from render_sessions or fallback
     session = render_sessions.get(req.render_id)

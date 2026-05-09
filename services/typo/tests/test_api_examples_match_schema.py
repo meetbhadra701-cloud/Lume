@@ -6,10 +6,7 @@ the shape matches what the frontend expects.
 import json
 from pathlib import Path
 
-import pytest
-
 from app.schemas import (
-    AdaptationConfig,
     RateRequest,
     RateResponse,
     RenderRequest,

@@ -1,6 +1,4 @@
 """Test H1 paired design: pivot must produce ≥80% paired rows (§A.14)."""
-import pytest
-import pandas as pd
 
 from app.eda.synthesize import generate_synthetic_events
 

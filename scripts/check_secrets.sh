@@ -7,7 +7,8 @@ echo "=== Checking for secrets in tracked files ==="
 HITS=0
 
 # Check for raw Anthropic API keys
-if git grep -nE 'sk-ant' -- . ':!.env.example' 2>/dev/null | grep -v '.env.example'; then
+# Exclude .env.example, this script itself, and docs that describe the pattern
+if git grep -nE 'sk-ant' -- . ':!.env.example' ':!scripts/check_secrets.sh' ':!docs/AI_RULES.md' ':!docs/PLAN.md' 2>/dev/null; then
     echo "ERROR: Found 'sk-ant' pattern in tracked files!"
     HITS=$((HITS + 1))
 fi

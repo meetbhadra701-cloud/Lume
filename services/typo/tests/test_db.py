@@ -3,9 +3,7 @@
 Uses a temp DB via LUME_DB_PATH env override — never touches seed.db.
 """
 import json
-import os
 import sqlite3
-import tempfile
 import time
 from pathlib import Path
 

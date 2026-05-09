@@ -21,7 +21,6 @@ level) and therefore call the algorithm "Knuth-Plass-inspired."
 from __future__ import annotations
 
 import functools
-from typing import Optional
 
 from app.adaptations.syllables import syllable_positions
 

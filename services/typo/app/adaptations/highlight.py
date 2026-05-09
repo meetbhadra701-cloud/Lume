@@ -30,8 +30,8 @@ from __future__ import annotations
 import re
 from typing import Optional
 
-from app.data_structures.trie import Trie
 from app.data_structures.freq_index import FreqIndex
+from app.data_structures.trie import Trie
 
 # ---------------------------------------------------------------
 # Configuration

@@ -1,8 +1,6 @@
 """Tests for app.data_structures.freq_index (Phase 1.2)."""
-import pytest
 
 from app.data_structures.freq_index import FreqIndex
-
 
 PAIRS = [
     ("the", 0.9),

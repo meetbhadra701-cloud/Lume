@@ -1,5 +1,4 @@
 """Tests for app.data_structures.trie (Phase 1.1)."""
-import pytest
 
 from app.data_structures.trie import Trie
 

@@ -181,6 +181,7 @@ def _self_test() -> None:
     Run via: cd services/typo && uv run python -m app.ml.model --self-test
     """
     import random
+
     from app.ml.arms import ARMS
 
     random.seed(0)
@@ -218,7 +219,7 @@ def _self_test() -> None:
     assert FEATURE_DIM == 47, f"Wrong dim: {FEATURE_DIM}"
 
     # Predict on one arm
-    from app.schemas import TextFeatures, AdaptationConfig
+    from app.schemas import AdaptationConfig, TextFeatures
     tf = TextFeatures(avg_word_len=5.0, syllable_density=1.5, freq_percentile_mean=0.5, sentence_count=5, flesch_kincaid=8.0)
     cfg = AdaptationConfig(**ARMS[0])
     pred = model.predict(tf, cfg)

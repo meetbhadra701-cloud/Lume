@@ -1,5 +1,4 @@
 """Tests for app.adaptations.syllables (Phase 1.3)."""
-import pytest
 
 from app.adaptations.syllables import syllable_count, syllable_positions, walk
 

@@ -23,7 +23,6 @@ from typing import Optional
 
 import pyphen
 
-
 # Module-level pyphen dictionary (loaded once)
 _PYPHEN_DICT: Optional[pyphen.Pyphen] = None
 
