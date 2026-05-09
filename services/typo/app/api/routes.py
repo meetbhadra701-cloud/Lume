@@ -204,17 +204,16 @@ async def render(req: RenderRequest) -> RenderResponse:
         # Mode-based (Phase 2 will wire recommender for lume_tuned)
         cfg, rec_source, arm_idx = config_for_mode(req.mode)
 
-        # If lume_tuned and bandit is available, sample
+        # If lume_tuned, use the full recommender (bandit → model as events grow)
         if req.mode == "lume_tuned":
             try:
-                from app.ml.bandit import get_bandit
-                from app.ml.arms import ARMS
+                from app.ml.recommender import recommend
 
-                bandit = get_bandit()
-                arm_idx = bandit.sample(req.user_id)
-                arm_cfg_dict = ARMS[arm_idx]
-                cfg = AdaptationConfig(**arm_cfg_dict)
-                rec_source = "bandit"
+                # Extract features first so the recommender can use them
+                # (features may not yet be in cache; compute a lightweight version)
+                _features_for_rec = _extract_features(text)
+                with get_conn() as _conn:
+                    cfg, arm_idx, rec_source = recommend(req.user_id, _features_for_rec, _conn)
             except Exception:
                 pass  # Fall back to mode_lume_tuned config set above
 

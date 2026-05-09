@@ -54,4 +54,4 @@ def config_for_mode(mode: str) -> tuple[AdaptationConfig, str, int]:
         # Replaced by recommender in Phase 2.5; stub returns fallback
         return MODE_LUME_TUNED_FALLBACK, "mode_lume_tuned", -1
     else:
-        return MODE_DEFAULT, "mode_default", -1
+        raise ValueError(f"Unknown mode: {mode!r}. Valid modes: 'default', 'bionic', 'lume_tuned'.")
