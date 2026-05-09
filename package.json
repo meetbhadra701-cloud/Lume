@@ -1,0 +1,12 @@
+{
+  "name": "lume-monorepo",
+  "version": "0.0.1",
+  "private": true,
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "msw",
+      "sharp",
+      "unrs-resolver"
+    ]
+  }
+}

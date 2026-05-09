@@ -4,7 +4,7 @@
 
 Determined at scaffold time via `pnpm dlx create-next-app@latest --version`. Updated below after scaffold.
 
-**Scaffolded version:** [TBD — will be updated during Phase 0.2]
+**Scaffolded version:** Next.js 16.2.6 (create-next-app@latest as of 2026-05-09)
 
 ---
 
