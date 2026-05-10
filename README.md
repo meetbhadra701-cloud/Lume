@@ -6,15 +6,55 @@ As many as 15–20% of the population shows symptoms of dyslexia (International 
 
 ---
 
-## 🏆 Track Alignment
+## 🎬 Demo
 
-Lume is purpose-built for three hackathon tracks:
+**[▶ Watch the Lume Demo Video](https://youtu.be/YOUR_VIDEO_ID)**  
+**[📊 View the Pitch Deck](https://gamma.app/docs/Lume-Illuminating-Personalized-Literacy-fs4w8yo18xc3wmr)**  
+**[💻 GitHub Repository](https://github.com/meetbhadra701-cloud/Lume)**
 
-| Track | Evidence |
+---
+
+## 🏆 Hackathon Tracks
+
+Lume is submitted for **three tracks**:
+
+### ♿ Track 1 — Accessibility
+**Lume is the product.** It redefines WCAG 3.0 accessibility by treating it as a dynamic, machine-learned state rather than a static preset. Every user gets a continuously personalized typographic configuration — not a one-size-fits-all toggle.
+
+| Signal | Detail |
 |---|---|
-| **♿ Accessibility** | Lighthouse 100/100 · axe-core 0 violations · full keyboard nav · WCAG AA color contrast · WCAG 3.0 dynamic personalization · OpenDyslexic font · zero-barrier 60-second onboarding |
-| **🌍 Social Impact / AI for Good** | Addresses a documented $2.4 T global productivity gap caused by untreated reading barriers. Every session improves the model—Lume gets smarter for each user with zero manual tuning. On-device SQLite: no user text ever leaves the machine. |
-| **📊 EDA + Technical Depth** | 16-arm Thompson Sampling bandit with Beta(α,β) posteriors · per-user Ridge regression (47-dim feature vector) · MSE-optimized reward signal (0.7×WPM + 0.3×blended comprehension) · 3 EDA hypotheses with statsmodels OLS, paired t-test, ANOVA · 8 custom DSAs (Trie, FreqIndex, KP-hyphenator, …) · 145 pytest tests · CI: ruff + lint + build + secret guard |
+| Lighthouse score | 100 / 100 (automated) |
+| axe-core violations | 0 |
+| Keyboard navigation | Full — every action reachable via Tab / Enter / Escape / ←→ |
+| WCAG AA compliance | Color contrast, focus rings, ARIA roles, `role="dialog"` tour |
+| WCAG 3.0 dynamic personalization | Per-user Ridge model auto-applies optimal config every session |
+| Onboarding friction | 60 seconds to first insight; first-time tour built in |
+| Font support | OpenDyslexic (SIL-OFL, locally bundled — no CDN dependency) |
+
+### 📊 Track 2 — EDA (Exploratory Data Analysis)
+We use rigorous statistical reasoning to **mathematically prove comprehension growth** and validate the convergence point.
+
+| Metric | What it measures |
+|---|---|
+| **MSE (Mean Squared Error)** | Ridge regression training loss; minimized per user across 47-dim feature space |
+| **R² tracking** | Model fit quality logged per user; EDA notebook shows R² improves with more sessions |
+| **Precision** | Stagnation detector: convergence fires only when σ(reward) ≤ 0.08 over 3 sessions, preventing false positives |
+| **Paired t-test** | Hypothesis 1 — letter spacing significantly improves WPM (p < 0.05) |
+| **One-way ANOVA** | Hypothesis 2 — arm group differences in comprehension score |
+| **OLS regression** | Statsmodels OLS validates feature importance in the 47-dim vector |
+
+All EDA code and figures live in `services/typo/app/eda/` and `docs/figures/`.
+
+### ⚙️ Track 3 — Most Technically Challenging Hack
+A full-stack ML system with production-grade architecture:
+
+- **16-arm Thompson Sampling Contextual Bandit** with continuous Beta(α,β) posterior updates — each arm is a distinct typographic configuration
+- **Per-user Ridge Regression** (47-dim feature vector: text complexity, syllable density, Flesch-Kincaid, arm config booleans) gated at ≥30 events
+- **Blended reward signal**: `R = 0.7 × normalize_wpm(WPM) + 0.3 × blend_comprehension(self_rating, MCQ)` — fuses two independent comprehension signals
+- **Stagnation detection**: convergence when `mean(reward) ≥ 0.65 AND std(reward) ≤ 0.08` over last 3 sessions → auto-locks Best Fit config
+- **8 custom DSAs**: Trie (prefix lookup), FreqIndex (heap-backed), Knuth-Plass hyphenator (DP), and 5 more
+- **Multi-stack**: Next.js 16 + React 19 frontend · FastAPI + Python 3.11 backend · SQLite · scikit-learn · scipy · statsmodels
+- **145 passing pytest tests** · CI pipeline: ruff + lint + pnpm build + notebook smoke + secret guard + public-base guard
 
 ---
 
@@ -89,17 +129,13 @@ cd services/typo && uv run uvicorn app.main:app --port 8001
 | 6 | Chunked reading | ~80-word chunks with pagination |
 | 7 | OpenDyslexic font | Locally-bundled SIL-OFL font |
 
-## Prize Tracks
+## Submitted Tracks
 
-| Track | Operationalized |
-|---|---|
-| Accessibility (#5) | ✅ Lighthouse 100/100, axe-core 0 violations, keyboard nav, WCAG AA |
-| EDA + Statistics (#7) | ✅ 3 hypotheses, statsmodels OLS, paired t-test, ANOVA |
-| Technical Depth (#2) | ✅ 8 DSAs, Ridge regression, Thompson sampling bandit |
-| Social Good / Social Impact (#1) | ✅ Targets dyslexia ($2.4T economic gap, 43M US adults); on-device privacy |
-| AI for Good (#8) | ✅ Personalized ML that improves silently per session; zero data exposure |
-| Creative (#3) | Submitted |
-| Design (#9) | Submitted |
+| # | Track | Status |
+|---|---|---|
+| 1 | ♿ **Accessibility** | ✅ Primary — Lume is the product |
+| 2 | 📊 **EDA / Exploratory Data Analysis** | ✅ Primary — MSE, R², precision, OLS, ANOVA |
+| 3 | ⚙️ **Most Technically Challenging Hack** | ✅ Primary — 16-arm bandit + Ridge + 145 tests |
 
 ## Repo Layout
 
