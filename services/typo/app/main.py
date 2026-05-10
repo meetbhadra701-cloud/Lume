@@ -1,5 +1,6 @@
 """Lume FastAPI backend — main entry point."""
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -23,10 +24,53 @@ from fastapi.responses import JSONResponse  # noqa: E402
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
+# ── Lifespan (replaces deprecated @app.on_event("startup")) ─────────────────
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):  # noqa: ARG001
+    """Startup: seed demo RNG, rebuild bandit posteriors, warm caches."""
+    from app.store.db import get_conn
+    from app.store.paths import db_path
+
+    db_file = db_path()
+    if not db_file.exists():
+        logger.warning(
+            "Database not found at %s. Run: python scripts/reset_db.py", db_file
+        )
+    else:
+        try:
+            from app.ml.bandit import get_bandit
+            with get_conn() as conn:
+                bandit = get_bandit()
+                bandit.rebuild_from_events(conn)
+                bandit.seed_demo_user(42)
+            logger.info("Bandit posteriors rebuilt from events; demo RNG seeded.")
+        except Exception as exc:
+            logger.warning("Bandit startup failed (non-fatal): %s", exc)
+
+    try:
+        import textstat
+        textstat.flesch_kincaid_grade("warmup text for initialization purposes only")
+        logger.info("textstat warmed up.")
+    except Exception as exc:
+        logger.warning("textstat warmup failed (non-fatal): %s", exc)
+
+    try:
+        from app.adaptations.highlight import build_freq_resources
+        build_freq_resources()
+        logger.info("Frequency resources (Trie + FreqIndex) loaded.")
+    except Exception as exc:
+        logger.warning("Frequency resource load failed (non-fatal): %s", exc)
+
+    yield  # application runs here
+
+
 app = FastAPI(
     title="Lume API",
     description="Personalized reading-accessibility backend",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 # CORS — read from env; defaults to localhost dev
@@ -68,49 +112,6 @@ async def generic_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content={"error": {"code": "internal_error", "message": "An internal error occurred."}},
     )
-
-
-# ── Startup ─────────────────────────────────────────────────────────────────
-
-@app.on_event("startup")
-async def startup_event():
-    """Seed demo RNG + rebuild bandit posteriors from events."""
-    from app.store.db import get_conn
-    from app.store.paths import db_path
-
-    # Ensure DB is initialized (schema applied)
-    db_file = db_path()
-    if not db_file.exists():
-        logger.warning(
-            "Database not found at %s. Run: python scripts/reset_db.py", db_file
-        )
-    else:
-        # Rebuild bandit posteriors from events
-        try:
-            from app.ml.bandit import get_bandit
-            with get_conn() as conn:
-                bandit = get_bandit()
-                bandit.rebuild_from_events(conn)
-                bandit.seed_demo_user(42)
-            logger.info("Bandit posteriors rebuilt from events; demo RNG seeded.")
-        except Exception as exc:
-            logger.warning("Bandit startup failed (non-fatal): %s", exc)
-
-    # Warm up textstat so first request doesn't take 9s
-    try:
-        import textstat
-        textstat.flesch_kincaid_grade("warmup text for initialization purposes only")
-        logger.info("textstat warmed up.")
-    except Exception as exc:
-        logger.warning("textstat warmup failed (non-fatal): %s", exc)
-
-    # Pre-load wordfreq Trie + FreqIndex (50k vocab, happens once)
-    try:
-        from app.adaptations.highlight import build_freq_resources
-        build_freq_resources()
-        logger.info("Frequency resources (Trie + FreqIndex) loaded.")
-    except Exception as exc:
-        logger.warning("Frequency resource load failed (non-fatal): %s", exc)
 
 
 # ── Routes ───────────────────────────────────────────────────────────────────

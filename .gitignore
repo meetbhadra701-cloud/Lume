@@ -40,3 +40,7 @@ services/typo/app/eda/.cache/
 
 # OS
 .DS_Store
+
+# Claude Code agent skills (local tooling — not part of submission)
+.agents/
+skills-lock.json
