@@ -39,7 +39,12 @@ class TestApiExamples:
         data = load_example("rate_request.json")
         req = RateRequest.model_validate(data)
         assert req.render_id
-        assert 0.0 <= req.comprehension_score <= 1.0
+        # comprehension_score may be None when both raw signals are provided
+        if req.comprehension_score is not None:
+            assert 0.0 <= req.comprehension_score <= 1.0
+        else:
+            # "both" path: raw signals must be present instead
+            assert req.self_rating is not None or req.mcq_correct is not None
 
     def test_rate_response_parses(self):
         data = load_example("rate_response.json")

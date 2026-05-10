@@ -71,8 +71,12 @@ export interface RateRequest {
   recommendation_source: RecommendationSource;
   was_user_modified: boolean;
   wpm: number;
-  comprehension_score: number;
-  comprehension_type: "mc" | "self_rated";
+  // Comprehension signals — send comprehension_type="both" with self_rating + mcq_correct;
+  // backend blends them into the reward. comprehension_score is optional (legacy single-signal path).
+  comprehension_type: "mc" | "self_rated" | "both";
+  comprehension_score?: number | null;
+  self_rating?: number | null;        // 1-5 subjective slider
+  mcq_correct?: boolean | null;       // objective MCQ result
 }
 
 export interface RateResponse {
@@ -87,6 +91,12 @@ export interface ApiError {
     code: string;
     message: string;
   };
+}
+
+export interface MCQQuestion {
+  question: string;
+  choices: string[];      // exactly 4 items
+  correct_index: number;  // 0–3
 }
 
 export const DEFAULT_ADAPTATION_CONFIG: AdaptationConfig = {

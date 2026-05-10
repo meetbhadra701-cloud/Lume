@@ -5,6 +5,7 @@ import "./globals.css";
 const lexend = Lexend({
   variable: "--font-lexend",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -27,7 +28,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${lexend.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${lexend.variable} ${geistMono.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         {children}

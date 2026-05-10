@@ -17,13 +17,16 @@ from app.adaptations.chunking import chunk_text
 from app.adaptations.color import get_color_classes
 from app.adaptations.highlight import emphasize_tokens
 from app.adaptations.hyphenation import hyphenate_word
+from app.adaptations.mcq_generator import generate_mcq
 from app.adaptations.spacing import get_spacing_classes
 from app.api.mode_configs import config_for_mode
 from app.data_structures.adaptation_heap import AdaptationHeap
 from app.ml.arms import ARMS
-from app.ml.reward import compute_reward
+from app.ml.reward import blend_comprehension, compute_reward
 from app.schemas import (
     AdaptationConfig,
+    MCQQuestion,
+    MCQRequest,
     RateRequest,
     RateResponse,
     RenderRequest,
@@ -311,8 +314,15 @@ async def rate(req: RateRequest) -> RateResponse:
     else:
         data_source = "demo"
 
+    # Blend comprehension signals server-side
+    if req.self_rating is not None or req.mcq_correct is not None:
+        comprehension = blend_comprehension(req.self_rating, req.mcq_correct)
+    else:
+        # Legacy / single-signal path: caller supplied comprehension_score directly
+        comprehension = req.comprehension_score if req.comprehension_score is not None else 0.0
+
     # Compute reward
-    reward = compute_reward(req.wpm, req.comprehension_score)
+    reward = compute_reward(req.wpm, comprehension)
 
     # Build event record
     event = dict(
@@ -327,8 +337,10 @@ async def rate(req: RateRequest) -> RateResponse:
         was_user_modified=req.was_user_modified,
         word_count=word_count,
         wpm=req.wpm,
-        comprehension_score=req.comprehension_score,
+        comprehension_score=comprehension,
         comprehension_type=req.comprehension_type,
+        self_rating=req.self_rating,
+        mcq_correct=req.mcq_correct,
         reward=reward,
         data_source=data_source,
     )
@@ -407,3 +419,18 @@ async def top_arms(user_id: str, k: int = 3) -> dict:
         })
 
     return {"user_id": user_id, "top_arms": result}
+
+
+# ── /generate-mcq ─────────────────────────────────────────────────────────────
+
+@router.post("/generate-mcq", response_model=MCQQuestion)
+async def generate_mcq_endpoint(req: MCQRequest) -> MCQQuestion:
+    """Generate a single MCQ from the passage text the user just read.
+
+    Edge-case guarantee: the MCQ is derived exclusively from `req.text`.
+    For known seed passages (matched by `req.text_id`), a pre-defined
+    question is returned — ensuring the question is always about that
+    exact passage regardless of the algorithmic path.
+    """
+    result = generate_mcq(req.text, text_id=req.text_id)
+    return MCQQuestion(**result)

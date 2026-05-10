@@ -6,7 +6,7 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 
 from app.main import app
-from app.ml.reward import compute_reward
+from app.ml.reward import blend_comprehension, compute_reward
 
 VALID_TEXT = (
     "The ability to read quickly and accurately is a cornerstone of learning. "
@@ -59,10 +59,12 @@ async def test_rate_inserts_one_event_with_correct_reward(temp_db, monkeypatch):
 
         assert word_count >= 50, "Fixture passage must be ≥50 words"
 
-        # Rate it
+        # Rate it — use both signals (comprehension_type="both")
         wpm = 180.0
-        comprehension_score = 0.75
-        expected_reward = compute_reward(wpm, comprehension_score)
+        self_rating = 4
+        mcq_correct = True
+        expected_comprehension = blend_comprehension(self_rating, mcq_correct)
+        expected_reward = compute_reward(wpm, expected_comprehension)
 
         rate_resp = await client.post(
             "/rate",
@@ -74,8 +76,9 @@ async def test_rate_inserts_one_event_with_correct_reward(temp_db, monkeypatch):
                 "recommendation_source": rec_source,
                 "was_user_modified": False,
                 "wpm": wpm,
-                "comprehension_score": comprehension_score,
-                "comprehension_type": "self_rated",
+                "self_rating": self_rating,
+                "mcq_correct": mcq_correct,
+                "comprehension_type": "both",
             },
         )
         assert rate_resp.status_code == 200
@@ -87,12 +90,19 @@ async def test_rate_inserts_one_event_with_correct_reward(temp_db, monkeypatch):
             f"reward mismatch: got {returned_reward}, expected {expected_reward}"
         )
 
-        # Verify exactly one row in events
+        # Verify exactly one row and that both raw values are persisted
         conn = sqlite3.connect(str(temp_db))
         rows = conn.execute("SELECT * FROM events").fetchall()
+        assert len(rows) == 1, f"Expected 1 event, got {len(rows)}"
+        row = conn.execute(
+            "SELECT self_rating, mcq_correct, comprehension_score, comprehension_type FROM events LIMIT 1"
+        ).fetchone()
         conn.close()
 
-        assert len(rows) == 1, f"Expected 1 event, got {len(rows)}"
+        assert row[0] == self_rating, f"self_rating mismatch: {row[0]}"
+        assert row[1] == 1, f"mcq_correct should be 1, got {row[1]}"
+        assert abs(row[2] - expected_comprehension) < 0.001
+        assert row[3] == "both"
 
 
 @pytest.mark.asyncio
@@ -117,8 +127,9 @@ async def test_rate_was_user_modified_roundtrip(temp_db, monkeypatch):
                 "recommendation_source": "mode_default",
                 "was_user_modified": True,  # True here
                 "wpm": 150.0,
-                "comprehension_score": 0.6,
-                "comprehension_type": "self_rated",
+                "self_rating": 3,
+                "mcq_correct": False,
+                "comprehension_type": "both",
             },
         )
         assert rate_resp.status_code == 200

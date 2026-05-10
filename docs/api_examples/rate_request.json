@@ -18,6 +18,7 @@
   "recommendation_source": "bandit",
   "was_user_modified": false,
   "wpm": 185.5,
-  "comprehension_score": 0.75,
-  "comprehension_type": "self_rated"
+  "comprehension_type": "both",
+  "self_rating": 4,
+  "mcq_correct": true
 }

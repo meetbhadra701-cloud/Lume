@@ -48,6 +48,13 @@ def insert_event(conn: sqlite3.Connection, event: dict[str, Any]) -> int:
     if isinstance(row.get("adaptation_config_json"), dict):
         row["adaptation_config_json"] = json.dumps(row["adaptation_config_json"])
 
+    # Nullable new fields — default to None if caller didn't supply them
+    row.setdefault("self_rating", None)
+    row.setdefault("mcq_correct", None)
+    # bool → int for mcq_correct if present
+    if row["mcq_correct"] is not None:
+        row["mcq_correct"] = int(bool(row["mcq_correct"]))
+
     cursor = conn.execute(
         """
         INSERT INTO events (
@@ -56,6 +63,7 @@ def insert_event(conn: sqlite3.Connection, event: dict[str, Any]) -> int:
             arm_index, recommendation_source,
             was_user_modified, word_count,
             wpm, comprehension_score, comprehension_type,
+            self_rating, mcq_correct,
             reward, data_source, created_at
         ) VALUES (
             :user_id, :render_id, :text_id, :text_hash,
@@ -63,6 +71,7 @@ def insert_event(conn: sqlite3.Connection, event: dict[str, Any]) -> int:
             :arm_index, :recommendation_source,
             :was_user_modified, :word_count,
             :wpm, :comprehension_score, :comprehension_type,
+            :self_rating, :mcq_correct,
             :reward, :data_source, :created_at
         )
         """,

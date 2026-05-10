@@ -76,16 +76,17 @@ def test_rebuild_from_events(tmp_path, monkeypatch):
     feats_json = json.dumps({"avg_word_len": 4.5, "syllable_density": 1.3,
                               "freq_percentile_mean": 0.5, "sentence_count": 5, "flesch_kincaid": 8.0})
     rows = [
-        ("u1", None, None, "abc", feats_json, cfg_json, 0, "bandit", 0, 55, 200.0, 0.8, "self_rated", 0.8, "demo", now),
-        ("u1", None, None, "abc", feats_json, cfg_json, 0, "bandit", 0, 55, 190.0, 0.6, "self_rated", 0.6, "demo", now+1),
-        ("u1", None, None, "abc", feats_json, json.dumps(ARMS[2]), 2, "bandit", 0, 55, 100.0, 0.3, "self_rated", 0.3, "demo", now+2),
+        ("u1", None, None, "abc", feats_json, cfg_json, 0, "bandit", 0, 55, 200.0, 0.8, "self_rated", None, None, 0.8, "demo", now),
+        ("u1", None, None, "abc", feats_json, cfg_json, 0, "bandit", 0, 55, 190.0, 0.6, "self_rated", None, None, 0.6, "demo", now+1),
+        ("u1", None, None, "abc", feats_json, json.dumps(ARMS[2]), 2, "bandit", 0, 55, 100.0, 0.3, "self_rated", None, None, 0.3, "demo", now+2),
     ]
     conn.executemany(
         """INSERT INTO events
            (user_id, render_id, text_id, text_hash, features_json, adaptation_config_json,
             arm_index, recommendation_source, was_user_modified, word_count,
-            wpm, comprehension_score, comprehension_type, reward, data_source, created_at)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            wpm, comprehension_score, comprehension_type, self_rating, mcq_correct,
+            reward, data_source, created_at)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         rows,
     )
     conn.commit()

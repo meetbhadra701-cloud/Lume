@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class TextFeatures(BaseModel):
@@ -88,8 +88,27 @@ class RateRequest(BaseModel):
     ]
     was_user_modified: bool
     wpm: float
-    comprehension_score: float = Field(ge=0.0, le=1.0)
-    comprehension_type: Literal["mc", "self_rated"]
+    # ── Comprehension signals ────────────────────────────────────────────────
+    # When comprehension_type == "both", send self_rating + mcq_correct and
+    # omit comprehension_score — the backend blends them server-side.
+    # For legacy paths (synthetic seed rows, "mc"-only, "self_rated"-only) pass
+    # comprehension_score directly.
+    comprehension_score: float | None = Field(default=None, ge=0.0, le=1.0)
+    comprehension_type: Literal["mc", "self_rated", "both"]
+    self_rating: int | None = Field(default=None, ge=1, le=5)
+    mcq_correct: bool | None = None
+
+    @model_validator(mode="after")
+    def _enforce_one_signal(self) -> "RateRequest":
+        if (
+            self.self_rating is None
+            and self.mcq_correct is None
+            and self.comprehension_score is None
+        ):
+            raise ValueError(
+                "At least one of self_rating / mcq_correct / comprehension_score is required"
+            )
+        return self
 
 
 class RateResponse(BaseModel):
@@ -102,3 +121,18 @@ class RateResponse(BaseModel):
 class ErrorBody(BaseModel):
     code: str
     message: str
+
+
+class MCQRequest(BaseModel):
+    """Request body for /generate-mcq."""
+
+    text: Annotated[str, Field(min_length=1, max_length=10_000)]
+    text_id: str | None = None          # matches seed passage → pre-defined question
+
+
+class MCQQuestion(BaseModel):
+    """A single multiple-choice question with 4 choices."""
+
+    question: str
+    choices: list[str]                  # exactly 4 items
+    correct_index: int = Field(ge=0, le=3)   # index into choices[]

@@ -42,6 +42,18 @@ export const SEED_PASSAGES: SeedPassage[] = [
     source: "Project Gutenberg — public domain",
     text: `You will rejoice to hear that no disaster has accompanied the commencement of an enterprise which you have regarded with such evil forebodings. I arrived here yesterday, and my first task is to assure my dear sister of my welfare and increasing confidence in the success of my undertaking. I am already far north of London, and as I walk in the streets of Petersburgh, I feel a cold northern breeze play upon my cheeks, which braces my nerves and fills me with delight. Do you understand this feeling? This breeze, which has travelled from the regions towards which I am advancing, gives me a foretaste of those icy climes.`,
   },
+  {
+    id: "gutenberg_006",
+    title: "The Hound of the Baskervilles (Arthur Conan Doyle)",
+    source: "Project Gutenberg — public domain",
+    text: `Mr. Sherlock Holmes, who was usually very late in the mornings, save upon those not infrequent occasions when he was up all night, was seated at the breakfast table. I stood upon the hearth-rug and picked up the stick which our visitor had left behind him the night before. It was a fine, thick piece of wood, bulbous-headed, of the sort which is known as a Penang lawyer. Just under the head was a broad silver band nearly an inch across. To James Mortimer, M.R.C.S., from his friends of the C.C.H., was engraved upon it, with the date 1884. It was just such a stick as the old-fashioned family practitioner used to carry — dignified, solid, and reassuring.`,
+  },
+  {
+    id: "gutenberg_007",
+    title: "Walden (Henry David Thoreau)",
+    source: "Project Gutenberg — public domain",
+    text: `I went to the woods because I wished to live deliberately, to front only the essential facts of life, and see if I could not learn what it had to teach, and not, when I came to die, discover that I had not lived. I did not wish to live what was not life, living is so dear; nor did I wish to practise resignation, unless it was quite necessary. I wanted to live deep and suck out all the marrow of life, to live so sturdily and Spartan-like as to put to rout all that was not life, to cut a broad swath and shave close, to drive life into a corner, and reduce it to its lowest terms.`,
+  },
 ];
 
 export function getRandomSeedPassage(): SeedPassage {

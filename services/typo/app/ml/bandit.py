@@ -5,6 +5,7 @@ Update: alpha += reward; beta += 1.0 - reward.
 """
 from __future__ import annotations
 
+import math
 import sqlite3
 from typing import TYPE_CHECKING
 
@@ -60,7 +61,14 @@ class LumeBandit:
         return int(np.argmax(samples))
 
     def update(self, user_id: str, arm: int, reward: float) -> None:
-        """Continuous Beta update (rev. 4 §A.7)."""
+        """Continuous Beta update (rev. 4 §A.7).
+
+        Discards non-finite rewards silently to prevent NaN from corrupting posteriors.
+        Clamps reward to [0, 1] to keep Beta parameters valid.
+        """
+        if not math.isfinite(reward):
+            return
+        reward = max(0.0, min(1.0, reward))
         self._ensure_user(user_id)
         self.alpha[user_id][arm] += reward
         self.beta_[user_id][arm] += 1.0 - reward

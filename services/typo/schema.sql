@@ -24,8 +24,10 @@ CREATE TABLE IF NOT EXISTS events (
   was_user_modified       INTEGER NOT NULL DEFAULT 0,    -- bool 0/1
   word_count              INTEGER NOT NULL,              -- enforces ≥50 logging gate
   wpm                     REAL    NOT NULL,
-  comprehension_score     REAL    NOT NULL,              -- 0.0–1.0
-  comprehension_type      TEXT    NOT NULL CHECK(comprehension_type IN ('mc', 'self_rated')),
+  comprehension_score     REAL    NOT NULL,              -- 0.0–1.0 (blended when both signals present)
+  comprehension_type      TEXT    NOT NULL CHECK(comprehension_type IN ('mc', 'self_rated', 'both')),
+  self_rating             INTEGER CHECK(self_rating IS NULL OR self_rating BETWEEN 1 AND 5),
+  mcq_correct             INTEGER CHECK(mcq_correct IS NULL OR mcq_correct IN (0, 1)),
   reward                  REAL    NOT NULL,
   data_source             TEXT    NOT NULL CHECK(data_source IN ('synthetic', 'real_user', 'demo')),
   created_at              INTEGER NOT NULL               -- int(time.time()*1000) in Python at insert

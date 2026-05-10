@@ -32,10 +32,11 @@ def _insert_event(conn, was_user_modified: int, arm_index: int = 0, reward: floa
         """INSERT INTO events
            (user_id, render_id, text_id, text_hash, features_json, adaptation_config_json,
             arm_index, recommendation_source, was_user_modified, word_count,
-            wpm, comprehension_score, comprehension_type, reward, data_source, created_at)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            wpm, comprehension_score, comprehension_type, self_rating, mcq_correct,
+            reward, data_source, created_at)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         ("u1", None, None, "hash123", feats_json, cfg_json, arm_index,
-         "bandit", was_user_modified, 60, 180.0, reward, "self_rated", reward, "demo", now),
+         "bandit", was_user_modified, 60, 180.0, reward, "self_rated", None, None, reward, "demo", now),
     )
 
 
